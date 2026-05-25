@@ -165,14 +165,14 @@
     const policy = policySt[0], setPolicy = policySt[1];
     const errSt = useState("");
     const err = errSt[0], setErr = errSt[1];
-
-    const recentSt = useState(0);
-    const recentOff = recentSt[0], setRecentOff = recentSt[1];
+    const offSt = useState(0);
+    const recentOff = offSt[0], setRecentOff = offSt[1];
 
     function load() {
       setErr("");
+      const params = "?limit=20" + (recentOff > 0 ? "&offset=" + recentOff : "");
       Promise.all([
-        fetchJSON("/api/plugins/tool-result-optimizer/summary?limit=20&offset=" + recentOff),
+        fetchJSON("/api/plugins/tool-result-optimizer/summary" + params),
         fetchJSON("/api/plugins/tool-result-optimizer/policy")
       ]).then(function (parts) {
         setData(parts[0]);
