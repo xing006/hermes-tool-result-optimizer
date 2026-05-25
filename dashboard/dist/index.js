@@ -166,17 +166,20 @@
     const errSt = useState("");
     const err = errSt[0], setErr = errSt[1];
 
+    const recentSt = useState(0);
+    const recentOff = recentSt[0], setRecentOff = recentSt[1];
+
     function load() {
       setErr("");
       Promise.all([
-        fetchJSON("/api/plugins/tool-result-optimizer/summary?limit=200"),
+        fetchJSON("/api/plugins/tool-result-optimizer/summary?limit=20&offset=" + recentOff),
         fetchJSON("/api/plugins/tool-result-optimizer/policy")
       ]).then(function (parts) {
         setData(parts[0]);
         setPolicy(parts[1]);
       }).catch(function (e) { setErr(String(e)); });
     }
-    useEffect(function () { load(); }, []);
+    useEffect(function () { load(); }, [recentOff]);
 
     const totals = data && data.totals ? data.totals : {};
     const byTool = data && data.by_tool ? data.by_tool : [];
@@ -273,6 +276,22 @@
       ),
 
       h("h2", null, t("recentCalls")),
+      h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "8px" } },
+        h("span", { className: "tro-muted" }, "Showing " + recent.length + " / " + (data && data.recent_total || 0)),
+        h("div", { style: { display: "flex", gap: "6px", alignItems: "center" } },
+          h("button", {
+            style: { padding: "4px 10px", fontSize: "12px", cursor: "pointer", background: "transparent", border: "1px solid var(--color-border)", color: "var(--color-midground)", borderRadius: "4px" },
+            disabled: recentOff <= 0,
+            onClick: function () { setRecentOff(Math.max(0, recentOff - 20)); }
+          }, "\u2190 Prev"),
+          h("span", { style: { fontSize: "12px", fontFamily: "monospace" } }, (Math.floor(recentOff / 20) + 1) + " / " + Math.max(1, Math.ceil((data && data.recent_total || 0) / 20))),
+          h("button", {
+            style: { padding: "4px 10px", fontSize: "12px", cursor: "pointer", background: "transparent", border: "1px solid var(--color-border)", color: "var(--color-midground)", borderRadius: "4px" },
+            disabled: recentOff + 20 >= (data && data.recent_total || 0),
+            onClick: function () { setRecentOff(recentOff + 20); }
+          }, "Next \u2192")
+        )
+      ),
       h("table", { className: "tro-table" },
         h("thead", null, h("tr", null,
           [t("time"), t("tool"), t("session"), t("call"), t("mode"), t("raw"), t("compressed"), t("saved"), t("rate"), t("chars"), t("stored")].map(function (x) { return h("th", { key: x }, x); })
