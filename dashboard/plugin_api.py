@@ -15,11 +15,11 @@ def _plugin_root_on_path() -> None:
 
 
 @router.get("/summary")
-async def get_summary(limit: int = 100):
+async def get_summary(limit: int = 100, offset: int = 0):
     _plugin_root_on_path()
     from optimizer.telemetry import summary
 
-    return summary(limit=limit)
+    return summary(limit=limit, offset=offset)
 
 
 @router.get("/policy")
