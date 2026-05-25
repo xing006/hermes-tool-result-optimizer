@@ -136,7 +136,6 @@ def summary(limit: int = 100, offset: int = 0) -> Dict[str, Any]:
             """,
             (limit, offset),
         ).fetchall()
-        recent_total = conn.execute("SELECT COUNT(*) FROM tool_result_calls").fetchone()[0]
         top_raw = conn.execute(
             """
             SELECT tool_name, COUNT(*) AS calls, COALESCE(SUM(raw_tokens),0) AS raw_tokens,
@@ -149,12 +148,10 @@ def summary(limit: int = 100, offset: int = 0) -> Dict[str, Any]:
         ).fetchall()
         top_saved = conn.execute(
             """
-            SELECT tool_name, COUNT(*) AS calls, COALESCE(SUM(raw_tokens),0) AS raw_tokens,
-                   COALESCE(SUM(COALESCE(saved_tokens,0)),0) AS saved_tokens,
-                   CASE WHEN SUM(raw_tokens) > 0 THEN ROUND((SUM(COALESCE(saved_tokens,0)) * 100.0) / SUM(raw_tokens), 2) ELSE 0 END AS savings_rate
+            SELECT id, ts, tool_name, raw_tokens, COALESCE(compressed_tokens, raw_tokens) AS compressed_tokens,
+                   COALESCE(saved_tokens,0) AS saved_tokens, stored_path,
+                   CASE WHEN raw_tokens > 0 THEN ROUND((COALESCE(saved_tokens,0) * 100.0) / raw_tokens, 2) ELSE 0 END AS savings_rate
             FROM tool_result_calls
-            GROUP BY tool_name
-            HAVING saved_tokens > 0
             ORDER BY saved_tokens DESC, raw_tokens DESC
             LIMIT 10
             """
@@ -185,7 +182,6 @@ def summary(limit: int = 100, offset: int = 0) -> Dict[str, Any]:
         "totals": dict(totals) if totals else {},
         "by_tool": _rows(by_tool),
         "recent": _rows(recent),
-        "recent_total": recent_total,
         "rankings": {
             "top_raw_tools": _rows(top_raw),
             "top_saved_calls": _rows(top_saved),
