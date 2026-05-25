@@ -182,6 +182,7 @@ def summary(limit: int = 100, offset: int = 0) -> Dict[str, Any]:
         "totals": dict(totals) if totals else {},
         "by_tool": _rows(by_tool),
         "recent": _rows(recent),
+        "recent_total": conn.execute("SELECT COUNT(*) FROM tool_result_calls").fetchone()[0],
         "rankings": {
             "top_raw_tools": _rows(top_raw),
             "top_saved_calls": _rows(top_saved),
