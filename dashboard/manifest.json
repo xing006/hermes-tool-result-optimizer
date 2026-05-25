@@ -1,0 +1,14 @@
+{
+  "name": "tool-result-optimizer",
+  "label": "Tool Tokens",
+  "description": "Tool result token telemetry and compression savings",
+  "icon": "Gauge",
+  "version": "0.1.0",
+  "tab": {
+    "path": "/tool-result-optimizer",
+    "position": "after:plugins"
+  },
+  "entry": "dist/index.js",
+  "css": "dist/style.css",
+  "api": "plugin_api.py"
+}

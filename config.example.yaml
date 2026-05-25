@@ -1,0 +1,49 @@
+tool_result_optimizer:
+  enabled: true
+  telemetry:
+    enabled: true
+  compression:
+    enabled: true
+    min_chars: 12000
+    mode: preview_store
+    preview_head_chars: 3000
+    preview_tail_chars: 3000
+  storage:
+    enabled: true
+    retention_days: 14
+  tools:
+    terminal:
+      min_chars: 8000
+      mode: preview_store
+      preview_head_chars: 1000
+      preview_tail_chars: 7000
+    web_extract:
+      min_chars: 12000
+      mode: preview_store
+      preview_head_chars: 4000
+      preview_tail_chars: 4000
+    skill_view:
+      min_chars: 8000
+      mode: preview_store
+      preview_head_chars: 2500
+      preview_tail_chars: 2500
+    browser_snapshot:
+      min_chars: 10000
+      mode: preview_store
+      preview_head_chars: 3000
+      preview_tail_chars: 3000
+    browser_navigate:
+      min_chars: 10000
+      mode: preview_store
+      preview_head_chars: 3000
+      preview_tail_chars: 3000
+    patch:
+      min_chars: 16000
+      mode: preview_store
+      preview_head_chars: 5000
+      preview_tail_chars: 5000
+    default:
+      min_chars: 12000
+      mode: preview_store
+      preview_head_chars: 3000
+      preview_tail_chars: 3000

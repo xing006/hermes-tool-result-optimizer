@@ -1,0 +1,23 @@
+.tro-page { padding: 24px; max-width: 1480px; }
+.tro-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.tro-header h1 { font-size: 28px; font-weight: 700; margin: 0; }
+.tro-header p { margin: 6px 0 0; color: #8b949e; }
+.tro-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0 28px; }
+.tro-metric { border: 1px solid rgba(148,163,184,.25); border-radius: 12px; padding: 16px; background: rgba(15,23,42,.25); }
+.tro-metric-title { color: #94a3b8; font-size: 13px; }
+.tro-metric-value { font-size: 26px; font-weight: 700; margin-top: 8px; }
+.tro-metric-sub { color: #22c55e; font-size: 12px; margin-top: 4px; }
+.tro-table { width: 100%; border-collapse: collapse; margin: 8px 0 28px; font-size: 13px; }
+.tro-table th, .tro-table td { border-bottom: 1px solid rgba(148,163,184,.2); padding: 8px 10px; text-align: left; vertical-align: top; }
+.tro-table th { color: #94a3b8; font-weight: 600; white-space: nowrap; }
+.tro-path { max-width: 420px; overflow-wrap: anywhere; color: #94a3b8; font-size: 12px; }
+.tro-muted { color: #94a3b8; font-size: 12px; }
+.tro-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: #cbd5e1; }
+.tro-error { border: 1px solid #ef4444; color: #fecaca; background: rgba(127,29,29,.25); padding: 10px 12px; border-radius: 8px; margin: 12px 0; }
+.tro-rank-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
+.tro-rank-card { border: 1px solid rgba(148,163,184,.18); border-radius: 12px; padding: 12px; background: rgba(15,23,42,.18); overflow: auto; }
+.tro-rank-card h3 { margin: 0 0 8px; font-size: 15px; font-weight: 650; }
+.tro-rank-table { margin-bottom: 0; }
+.tro-policy-summary { color: #94a3b8; font-size: 13px; margin: 0 0 10px; }
+@media (max-width: 1100px) { .tro-rank-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .tro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

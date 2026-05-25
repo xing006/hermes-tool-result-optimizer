@@ -1,0 +1,5 @@
+name: tool-result-optimizer
+version: 0.1.0
+description: Observe and compress large Hermes tool results before they enter model context.
+author: local
+kind: standalone
