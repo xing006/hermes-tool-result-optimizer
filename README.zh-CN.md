@@ -16,15 +16,10 @@
 |------|------|
 | **全量遥测** | 每次工具调用记录原始长度、耗时、预估 token 数 |
 | **确定性压缩** | 基于阈值的首尾预览 + 原文入盘，不丢信息 |
-| **按工具独立策略** | terminal / web_extract / skill_view / browser / patch 各有不同的阈值和裁剪长度 |
-| **terminal_evidence** | 终端输出证据保留压缩——保留 exit code、错误行、stdout/stderr 尾部、告警行和最终摘要 |
-| **patch_diff_evidence** | Diff hunk 感知压缩——按 `@@ ... @@` 边界裁剪，优先保留风险 hunk（token/auth/config 变更），计数每文件省略的 hunk 数 |
-| **Dashboard 趋势图** | SVG 折线+柱状图展示原始 vs 压缩后 token 随时间变化——今日按小时、3/10/30 日按天聚合 |
-| **Dashboard 证据列** | 每行显示压缩模式药丸、terminal 状态/exit_code、patch 文件数/hunks/风险标记 |
-| **Dashboard 面板** | 实时总览：原始 vs 压缩后 token、按工具节省排行、调用明细 |
-| **国际化** | 简体中文 + English，自动检测浏览器语言 |
+| **按工具独立策略** | 各工具独立阈值；terminal 用 **terminal_evidence**（保留 exit code、错误行、尾部、最终摘要），patch 用 **patch_diff_evidence**（hunk 感知 diff 裁剪、风险标记），阅读型工具用 preview_store |
+| **Dashboard 面板** | Token 趋势图、按工具/按模式汇总、压缩策略展示、最近调用明细 |
 | **零核心改动** | 纯插件钩子（`post_tool_call` + `transform_tool_result`），不动一行 Hermes 源码 |
-| |
+
 
 ## 架构
 

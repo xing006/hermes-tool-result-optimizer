@@ -16,15 +16,10 @@
 |------------|-------------|
 | **Telementry** | Records raw tool result size, duration, and token estimate for every call |
 | **Deterministic compression** | Threshold-based head/tail preview with original stored to disk — no information lost |
-| **Per-tool strategy** | Independent thresholds and preview sizes for terminal, web_extract, skill_view, browser, patch, and more |
-| **terminal_evidence** | Evidence-preserving compression for terminal output — preserves exit code, error lines, stdout/stderr tail, warning lines, and final summary |
-| **patch_diff_evidence** | Hunk-aware diff compression — cuts at `@@ ... @@` boundaries, preserves risk hunks (token/auth/config changes), counts omitted hunks per file |
-| **Dashboard trend chart** | SVG line+bar chart showing raw vs compressed tokens over time, with hourly (Today) or daily (3/10/30 days) aggregation |
-| **Dashboard evidence columns** | Per-call mode pill, terminal status/exit_code, patch files/hunks/risk markers — visible at a glance |
-| **Dashboard tab** | Real-time overview: raw vs compressed tokens, per-tool savings, recent call details, top rankings |
-| **i18n** | English and Simplified Chinese UI — auto-detects browser locale |
+| **Per-tool strategy** | Independent thresholds per tool; **terminal_evidence** (preserves exit code, error lines, stdout/stderr tail, final summary) for terminal, **patch_diff_evidence** (hunk-aware diff with risk markers) for patch, preview_store for reading tools |
+| **Dashboard** | Real-time overview with token trend chart, per-tool/mode breakdown, compression policy display, and recent calls detail |
 | **No core changes** | Pure plugin hooks (`post_tool_call` + `transform_tool_result`), zero Hermes source modification |
-| |
+
 
 ## Architecture
 
