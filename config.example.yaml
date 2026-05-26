@@ -14,11 +14,11 @@ tool_result_optimizer:
   tools:
     terminal:
       mode: terminal_evidence
-      success_min_chars: 40000
-      failure_min_chars: 80000
-      stdout_head_chars: 1000
-      stdout_tail_chars: 4000
-      stderr_tail_chars: 8000
+      success_min_chars: 8000
+      failure_min_chars: 12000
+      stdout_head_chars: 500
+      stdout_tail_chars: 6000
+      stderr_tail_chars: 10000
       error_context_lines: 3
       max_error_lines: 80
       max_warning_lines: 40
@@ -45,7 +45,7 @@ tool_result_optimizer:
       preview_tail_chars: 3000
     patch:
       mode: patch_diff_evidence
-      success_min_chars: 40000
+      success_min_chars: 4000
       first_hunks_per_file: 2
       last_hunks_per_file: 1
       max_hunks_per_file: 8
