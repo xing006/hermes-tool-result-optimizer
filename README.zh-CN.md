@@ -17,6 +17,10 @@
 | **全量遥测** | 每次工具调用记录原始长度、耗时、预估 token 数 |
 | **确定性压缩** | 基于阈值的首尾预览 + 原文入盘，不丢信息 |
 | **按工具独立策略** | terminal / web_extract / skill_view / browser / patch 各有不同的阈值和裁剪长度 |
+| **terminal_evidence** | 终端输出证据保留压缩——保留 exit code、错误行、stdout/stderr 尾部、告警行和最终摘要 |
+| **patch_diff_evidence** | Diff hunk 感知压缩——按 `@@ ... @@` 边界裁剪，优先保留风险 hunk（token/auth/config 变更），计数每文件省略的 hunk 数 |
+| **Dashboard 趋势图** | SVG 折线+柱状图展示原始 vs 压缩后 token 随时间变化——今日按小时、3/10/30 日按天聚合 |
+| **Dashboard 证据列** | 每行显示压缩模式药丸、terminal 状态/exit_code、patch 文件数/hunks/风险标记 |
 | **Dashboard 面板** | 实时总览：原始 vs 压缩后 token、按工具节省排行、调用明细 |
 | **国际化** | 简体中文 + English，自动检测浏览器语言 |
 | **零核心改动** | 纯插件钩子（`post_tool_call` + `transform_tool_result`），不动一行 Hermes 源码 |
@@ -34,10 +38,14 @@ post_tool_call (钩子) ────► 记录原始大小/耗时/tokens 到 SQL
        ▼
 transform_tool_result (钩子)
        │
-       ├─ 超过阈值? → preview_store: head + tail + 元信息
-       │                原文落盘 (.txt)
+       ├─ terminal (> 40K) → terminal_evidence: exit code、错误行、尾部、摘要
+       │                      原文落盘 (.txt)
+       ├─ patch (> 40K) → patch_diff_evidence: hunk 感知 diff、风险标记
+       │                   原文落盘 (.txt)
+       ├─ preview_store (超过阈值) → head + tail + 元信息
+       │                            原文落盘 (.txt)
        │
-       └─ 小结果? → 原样通过
+       └─ 小结果 → 原样通过
        │
        ▼
 模型收到精简 JSON 包装（或原始结果）
@@ -101,19 +109,26 @@ hermes dashboard --stop && hermes dashboard --port 9119  # 重载 dashboard
 tool_result_optimizer:
   tools:
     terminal:
-      min_chars: 8000
-      preview_head_chars: 1000    # 保留命令上下文
-      preview_tail_chars: 7000    # 保留输出和错误
+      mode: terminal_evidence
+      success_min_chars: 40000          # 成功输出超过 40K 字符时压缩
+      failure_min_chars: 80000           # 失败输出超过 80K 字符时压缩
+      stdout_head_chars: 1000
+      stdout_tail_chars: 4000
+      stderr_tail_chars: 8000
+    patch:
+      mode: patch_diff_evidence
+      success_min_chars: 40000           # diff 超过 40K 字符时压缩
+      first_hunks_per_file: 2
+      last_hunks_per_file: 1
+      max_hunks_per_file: 8
+      max_hunk_chars: 12000
     skill_view:
       min_chars: 8000
       preview_head_chars: 2500
       preview_tail_chars: 2500
-    patch:
-      min_chars: 16000            # diff 需要更多上下文
-      preview_head_chars: 5000
-      preview_tail_chars: 5000
     default:
       min_chars: 12000
+      mode: preview_store
       preview_head_chars: 3000
       preview_tail_chars: 3000
 ```
@@ -124,13 +139,16 @@ tool_result_optimizer:
 
 ## Dashboard 面板
 
-插件在 Hermes Dashboard（`localhost:9119`）中添加 **Tool Result Tokens** 页签：
+插件在 Hermes Dashboard（`localhost:9119`）中添加 **Token优化看板** 页签：
 
+- **Token 趋势图：** SVG 折线+柱状图展示原始 vs 压缩后 token 随时间变化——今日按小时、3/10/30 日按天聚合，hover 显示详情
 - **指标卡片：** 原始 tokens、压缩后 tokens、节省 tokens、已压缩调用数
 - **排行诊断：** 最耗 token 的工具、节省最多的调用、压缩率偏低的工具、调用次数最多的工具
-- **按工具汇总表：** 每个工具的调用次数、tokens、节省率、平均耗时
+- **按压缩模式汇总：** 按 `preview_store` / `terminal_evidence` / `patch_diff_evidence` / `raw` 分组
+- **按工具汇总表：** 每个工具的模式、调用次数、tokens、节省率、平均耗时
 - **压缩策略：** 实时展示当前每个工具的阈值配置（模式、min_chars、头尾保留）
-- **最近调用明细：** 每次调用的时间、工具名、会话 ID、调用 ID、原始→压缩对比、原文路径
+- **最近调用明细：** 每次调用的时间、工具名、会话 ID、调用 ID、压缩模式药丸、证据列（terminal 状态/exit_code、patch 文件数/hunks/风险标记）、原始→压缩对比、原文路径
+- **时间范围：** 今日 / 3日 / 10日 / 30日——自然日对齐（非滚动窗口）
 - **语言：** 自动检测浏览器语言——简体中文和 English
 
 ---
@@ -146,19 +164,26 @@ tool_result_optimizer:
    - 返回精简 JSON 包装，包含首尾预览和元信息
    - 模型可通过 `read_file` 读取原文
 
-压缩后的结果示例：
+压缩后的 terminal 输出示例：
 
 ```json
 {
   "tool_result_optimized": true,
-  "original_chars": 54321,
-  "original_tokens_estimate": 13580,
-  "compression_mode": "preview_store",
-  "stored_path": "/home/user/.hermes/tool-result-optimizer/results/20260525-193001-web_extract-call_abc.txt",
-  "preview": {
-    "head": "开头 3000 字符...",
-    "tail": "...末尾 3000 字符"
-  }
+  "tool_name": "terminal",
+  "compression_mode": "terminal_evidence",
+  "original_chars": 84210,
+  "stored_path": "/home/user/.hermes/tool-result-optimizer/results/20260525-193001-terminal-call_abc.txt",
+  "evidence": {
+    "status": "failed",
+    "exit_code": 1,
+    "stdout_head": "...",
+    "stdout_tail": "...",
+    "stderr_tail": "...",
+    "error_lines": ["AssertionError: ..."],
+    "warning_lines": ["DeprecationWarning: ..."],
+    "final_lines": ["FAILED test_foo"]
+  },
+  "note": "Original terminal output was compressed before entering model context. Use read_file on stored_path if exact output is needed."
 }
 ```
 
@@ -171,8 +196,10 @@ tool_result_optimizer:
 | P0 | ✅ | 遥测 + 确定性压缩 + dashboard 总览 |
 | P1 | ✅ | 诊断面板（排行、按工具详情）+ 压缩策略展示 |
 | P1.5 | ✅ | Dashboard 国际化（简体中文 + English） |
-| P2-1 | 📋 已计划 | LLM 摘要脚手架（配置、安全路由、准入逻辑） |
-| P2-2 | ⏳ | 可选 LLM 摘要（白名单工具：web、browser、skill_view） |
+| P2 | ✅ | terminal_evidence + patch_diff_evidence 压缩模式 |
+| P2.5 | ✅ | Dashboard 趋势图、按模式分组、证据列、自然日时间过滤 |
+| P3-1 | 📋 已计划 | LLM 摘要脚手架（配置、安全路由、准入逻辑） |
+| P3-2 | ⏳ | 可选 LLM 摘要（白名单工具：web、browser、skill_view） |
 
 ---
 

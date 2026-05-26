@@ -17,6 +17,10 @@
 | **Telementry** | Records raw tool result size, duration, and token estimate for every call |
 | **Deterministic compression** | Threshold-based head/tail preview with original stored to disk — no information lost |
 | **Per-tool strategy** | Independent thresholds and preview sizes for terminal, web_extract, skill_view, browser, patch, and more |
+| **terminal_evidence** | Evidence-preserving compression for terminal output — preserves exit code, error lines, stdout/stderr tail, warning lines, and final summary |
+| **patch_diff_evidence** | Hunk-aware diff compression — cuts at `@@ ... @@` boundaries, preserves risk hunks (token/auth/config changes), counts omitted hunks per file |
+| **Dashboard trend chart** | SVG line+bar chart showing raw vs compressed tokens over time, with hourly (Today) or daily (3/10/30 days) aggregation |
+| **Dashboard evidence columns** | Per-call mode pill, terminal status/exit_code, patch files/hunks/risk markers — visible at a glance |
 | **Dashboard tab** | Real-time overview: raw vs compressed tokens, per-tool savings, recent call details, top rankings |
 | **i18n** | English and Simplified Chinese UI — auto-detects browser locale |
 | **No core changes** | Pure plugin hooks (`post_tool_call` + `transform_tool_result`), zero Hermes source modification |
@@ -34,8 +38,12 @@ post_tool_call (hook) ─────► record raw size/time/tokens into SQLite
        ▼
 transform_tool_result (hook)
        │
-       ├─ large? (> threshold) → preview_store: head + tail + metadata
-       │                          full original → disk (.txt)
+       ├─ terminal? (> 40K) → terminal_evidence: exit code, error lines, tail, summary
+       │                       full original → disk (.txt)
+       ├─ patch? (> 40K) → patch_diff_evidence: hunk-aware diff, risk markers
+       │                    full original → disk (.txt)
+       ├─ preview_store (> threshold) → head + tail + metadata
+       │                                full original → disk (.txt)
        │
        └─ small? → pass through unchanged
        │
@@ -101,19 +109,26 @@ Per-tool overrides:
 tool_result_optimizer:
   tools:
     terminal:
-      min_chars: 8000
-      preview_head_chars: 1000    # keep command context
-      preview_tail_chars: 7000    # preserve output/errors
+      mode: terminal_evidence
+      success_min_chars: 40000          # compress successful output > 40K chars
+      failure_min_chars: 80000           # compress failed output > 80K chars
+      stdout_head_chars: 1000
+      stdout_tail_chars: 4000
+      stderr_tail_chars: 8000
+    patch:
+      mode: patch_diff_evidence
+      success_min_chars: 40000           # compress diffs > 40K chars
+      first_hunks_per_file: 2
+      last_hunks_per_file: 1
+      max_hunks_per_file: 8
+      max_hunk_chars: 12000
     skill_view:
       min_chars: 8000
       preview_head_chars: 2500
       preview_tail_chars: 2500
-    patch:
-      min_chars: 16000            # diffs need more context
-      preview_head_chars: 5000
-      preview_tail_chars: 5000
     default:
       min_chars: 12000
+      mode: preview_store
       preview_head_chars: 3000
       preview_tail_chars: 3000
 ```
@@ -126,11 +141,14 @@ See `config.example.yaml` for the full reference.
 
 The plugin adds a **Tool Result Tokens** tab in your Hermes Dashboard (`localhost:9119`):
 
+- **Token trend chart:** SVG line+bar chart showing raw vs compressed tokens over time — hourly buckets for Today, daily for 3/10/30 days. Hover for tooltip with bucket, calls, raw/compressed/saved tokens, and savings rate.
 - **Metric cards:** raw tokens, compressed tokens, saved tokens, compressed calls count
 - **Top rankings:** most token-hungry tools, most saved calls, low savings tools, most called tools
-- **By-tool table:** per-tool breakdown with calls, tokens, savings rate, avg duration
+- **By compression mode table:** grouped by `preview_store` / `terminal_evidence` / `patch_diff_evidence` / `raw`
+- **By-tool table:** per-tool breakdown with mode, calls, tokens, savings rate, avg duration
 - **Compression policy:** live view of configured per-tool thresholds (mode, min_chars, head, tail)
-- **Recent calls:** per-call log with tool, session, call ID, raw→compressed comparison, stored path
+- **Recent calls:** per-call log with tool, session, call ID, compression mode pill, evidence column (terminal status/exit_code, patch files/hunks/risk markers), raw→compressed comparison, stored path
+- **Time range:** Today / 3 days / 10 days / 30 days — calendar-day aligned (not rolling window)
 - **Language:** auto-detects browser locale — English and Simplified Chinese
 
 ---
@@ -146,19 +164,26 @@ The plugin registers two hooks into Hermes's existing plugin system (no core cha
    - Returns a compact JSON wrapper with head/tail preview + metadata
    - The model can `read_file` the original if needed
 
-The compressed result looks like:
+The compressed result for a terminal command looks like:
 
 ```json
 {
   "tool_result_optimized": true,
-  "original_chars": 54321,
-  "original_tokens_estimate": 13580,
-  "compression_mode": "preview_store",
-  "stored_path": "/home/user/.hermes/tool-result-optimizer/results/20260525-193001-web_extract-call_abc.txt",
-  "preview": {
-    "head": "First 3000 chars...",
-    "tail": "...Last 3000 chars"
-  }
+  "tool_name": "terminal",
+  "compression_mode": "terminal_evidence",
+  "original_chars": 84210,
+  "stored_path": "/home/user/.hermes/tool-result-optimizer/results/20260525-193001-terminal-call_abc.txt",
+  "evidence": {
+    "status": "failed",
+    "exit_code": 1,
+    "stdout_head": "...",
+    "stdout_tail": "...",
+    "stderr_tail": "...",
+    "error_lines": ["AssertionError: ..."],
+    "warning_lines": ["DeprecationWarning: ..."],
+    "final_lines": ["FAILED test_foo"]
+  },
+  "note": "Original terminal output was compressed before entering model context. Use read_file on stored_path if exact output is needed."
 }
 ```
 
@@ -169,10 +194,12 @@ The compressed result looks like:
 | Phase | Status | What |
 |-------|--------|------|
 | P0 | ✅ | Telemetry + deterministic compression + dashboard summary |
-| P1 | ✅ | Diagnosis panel (top N, per-tool details) + compression policy display |
+|| P1 | ✅ | Diagnosis panel (top N, per-tool details) + compression policy display |
 | P1.5 | ✅ | Dashboard i18n (简体中文 + English) |
-| P2-1 | 📋 Planned | LLM summary scaffolding (config, safety routing, eligibility) |
-| P2-2 | ⏳ | Optional LLM summarization for whitelist tools (web, browser, skill_view) |
+| P2 | ✅ | terminal_evidence + patch_diff_evidence compression modes |
+| P2.5 | ✅ | Dashboard trend chart, by_mode grouping, evidence columns, calendar-day time filter |
+| P3-1 | 📋 Planned | LLM summary scaffolding (config, safety routing, eligibility) |
+| P3-2 | ⏳ | Optional LLM summarization for whitelist tools (web, browser, skill_view) |
 
 ---
 
