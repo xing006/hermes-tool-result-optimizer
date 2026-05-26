@@ -3,23 +3,49 @@
 .tro-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .tro-header h1 { font-size: 28px; font-weight: 700; margin: 0; color: var(--color-midground); }
 .tro-header p { margin: 6px 0 0; color: var(--color-muted-foreground); }
+.tro-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.tro-range-filter { display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-card); }
+.tro-range-label { padding: 0 8px; font-size: 12px; color: var(--color-muted-foreground); white-space: nowrap; }
+.tro-range-btn, .tro-btn { border: 1px solid transparent; background: transparent; color: var(--color-muted-foreground); cursor: pointer; }
+.tro-range-btn { padding: 5px 10px; border-radius: 999px; font-size: 12px; line-height: 1.2; }
+.tro-range-btn:hover, .tro-btn:hover:not(:disabled) { background: var(--color-muted); color: var(--color-midground); }
+.tro-range-btn.active { background: var(--color-accent); color: var(--color-midground); border-color: var(--color-border); font-weight: 650; }
+.tro-btn { padding: 5px 10px; font-size: 12px; border-color: var(--color-border); border-radius: 6px; }
+.tro-btn:disabled { opacity: .45; cursor: not-allowed; }
 .tro-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0 28px; }
 .tro-metric { border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; background: var(--color-card); }
 .tro-metric-title { color: var(--color-muted-foreground); font-size: 13px; }
 .tro-metric-value { font-size: 26px; font-weight: 700; margin-top: 8px; color: var(--color-midground); }
-.tro-metric-sub { color: #22c55e; font-size: 12px; margin-top: 4px; }
+.tro-metric-sub { color: var(--color-primary); font-size: 12px; margin-top: 4px; }
 .tro-table { width: 100%; border-collapse: collapse; margin: 8px 0 28px; font-size: 13px; }
 .tro-table th, .tro-table td { border-bottom: 1px solid var(--color-border); padding: 8px 10px; text-align: left; vertical-align: top; color: var(--color-midground); }
 .tro-table th { color: var(--color-muted-foreground); font-weight: 600; white-space: nowrap; }
 .tro-table tr:hover td { background: var(--color-muted); }
+.tro-table-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.tro-page-actions { display: flex; align-items: center; gap: 6px; }
+.tro-page-btn { padding: 4px 10px; font-size: 11px; }
+.tro-page-num { font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace); font-size: 12px; color: var(--color-midground); white-space: nowrap; }
 .tro-path { max-width: 420px; overflow-wrap: anywhere; color: var(--color-muted-foreground); font-size: 12px; }
 .tro-muted { color: var(--color-muted-foreground); font-size: 12px; }
 .tro-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: var(--color-midground); }
-.tro-error { border: 1px solid #ef4444; color: #fecaca; background: rgba(127,29,29,.35); padding: 10px 12px; border-radius: 8px; margin: 12px 0; }
+.tro-mode-pill { display: inline-flex; align-items: center; max-width: 180px; padding: 2px 7px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-muted); color: var(--color-midground); font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tro-evidence { max-width: 320px; overflow-wrap: anywhere; color: var(--color-muted-foreground); font-size: 12px; }
+.tro-error { border: 1px solid var(--color-destructive, var(--color-border)); color: var(--color-destructive, var(--color-midground)); background: var(--color-card); padding: 10px 12px; border-radius: 8px; margin: 12px 0; }
 .tro-rank-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
 .tro-rank-card { border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; background: var(--color-card); overflow: auto; }
 .tro-rank-card h3 { margin: 0 0 8px; font-size: 15px; font-weight: 650; color: var(--color-midground); }
 .tro-rank-table { margin-bottom: 0; }
 .tro-policy-summary { color: var(--color-muted-foreground); font-size: 13px; margin: 0 0 10px; }
-@media (max-width: 1100px) { .tro-rank-grid { grid-template-columns: 1fr; } }
-@media (max-width: 900px) { .tro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tro-chart-card { border: 1px solid var(--color-border); border-radius: 12px; padding: 14px; background: var(--color-card); margin: 0 0 28px; position: relative; }
+.tro-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.tro-chart-title { font-size: 15px; font-weight: 650; color: var(--color-midground); }
+.tro-chart-legend { display: flex; gap: 14px; align-items: center; }
+.tro-legend-item { font-size: 11px; white-space: nowrap; }
+.tro-chart-svg-wrap { position: relative; }
+.tro-chart-svg { width: 100%; height: auto; display: block; }
+.tro-chart-empty { padding: 40px 0; text-align: center; color: var(--color-muted-foreground); }
+.tro-chart-tooltip { position: absolute; pointer-events: none; z-index: 10; background: var(--color-card); border: 1px solid var(--color-border); border-radius: 8px; padding: 8px 11px; font-size: 12px; line-height: 1.6; box-shadow: 0 4px 12px rgba(0,0,0,0.15); color: var(--color-midground); white-space: nowrap; }
+.tro-tt-row { display: flex; justify-content: space-between; gap: 10px; }
+.tro-tt-val { font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace); text-align: right; }
+@media (max-width: 1100px) { .tro-rank-grid { grid-template-columns: 1fr; } .tro-header { align-items: flex-start; flex-direction: column; } .tro-header-actions { justify-content: flex-start; } }
+@media (max-width: 900px) { .tro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tro-table-head { align-items: flex-start; flex-direction: column; } }

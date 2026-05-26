@@ -64,6 +64,7 @@ def transform_tool_result(**kwargs: Any) -> str | None:
             compressed_tokens=int(out["compressed_tokens"]),
             changed=bool(out["changed"]),
             stored_path=out.get("stored_path") or "",
+            compressed_text=out.get("compressed_text") or "",
         )
         if out["changed"]:
             return out["compressed_text"]

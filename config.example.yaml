@@ -13,10 +13,16 @@ tool_result_optimizer:
     retention_days: 14
   tools:
     terminal:
-      min_chars: 8000
-      mode: preview_store
-      preview_head_chars: 1000
-      preview_tail_chars: 7000
+      mode: terminal_evidence
+      success_min_chars: 40000
+      failure_min_chars: 80000
+      stdout_head_chars: 1000
+      stdout_tail_chars: 4000
+      stderr_tail_chars: 8000
+      error_context_lines: 3
+      max_error_lines: 80
+      max_warning_lines: 40
+      max_final_lines: 30
     web_extract:
       min_chars: 12000
       mode: preview_store
@@ -38,10 +44,12 @@ tool_result_optimizer:
       preview_head_chars: 3000
       preview_tail_chars: 3000
     patch:
-      min_chars: 16000
-      mode: preview_store
-      preview_head_chars: 5000
-      preview_tail_chars: 5000
+      mode: patch_diff_evidence
+      success_min_chars: 40000
+      first_hunks_per_file: 2
+      last_hunks_per_file: 1
+      max_hunks_per_file: 8
+      max_hunk_chars: 12000
     default:
       min_chars: 12000
       mode: preview_store

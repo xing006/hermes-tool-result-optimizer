@@ -16,9 +16,19 @@ DEFAULTS: Dict[str, Any] = {
     },
     "storage": {"enabled": True, "retention_days": 14},
     "tools": {
-        # Long command output is usually useful at the end. Keep a small header for command/context,
-        # preserve more tail for errors, summaries, and final test output.
-        "terminal": {"min_chars": 8000, "mode": "preview_store", "preview_head_chars": 1000, "preview_tail_chars": 7000},
+        # Long command output is evidence, not plain text. Use a terminal-specific deterministic policy.
+        "terminal": {
+            "mode": "terminal_evidence",
+            "success_min_chars": 40000,
+            "failure_min_chars": 80000,
+            "stdout_head_chars": 1000,
+            "stdout_tail_chars": 4000,
+            "stderr_tail_chars": 8000,
+            "error_context_lines": 3,
+            "max_error_lines": 80,
+            "max_warning_lines": 40,
+            "max_final_lines": 30,
+        },
         # Extracted pages often have useful title/intro and references/footer. Keep balanced preview.
         "web_extract": {"min_chars": 12000, "mode": "preview_store", "preview_head_chars": 4000, "preview_tail_chars": 4000},
         # Full skill docs can be very large; keep concise bookends and store original.
@@ -26,8 +36,15 @@ DEFAULTS: Dict[str, Any] = {
         # Browser snapshots are structure-heavy; keep enough top nav plus bottom state.
         "browser_snapshot": {"min_chars": 10000, "mode": "preview_store", "preview_head_chars": 3000, "preview_tail_chars": 3000},
         "browser_navigate": {"min_chars": 10000, "mode": "preview_store", "preview_head_chars": 3000, "preview_tail_chars": 3000},
-        # Diffs/code review data should remain deterministic, not LLM summarized.
-        "patch": {"min_chars": 16000, "mode": "preview_store", "preview_head_chars": 5000, "preview_tail_chars": 5000},
+        # Diffs/code review data should remain deterministic and hunk-aware.
+        "patch": {
+            "mode": "patch_diff_evidence",
+            "success_min_chars": 40000,
+            "first_hunks_per_file": 2,
+            "last_hunks_per_file": 1,
+            "max_hunks_per_file": 8,
+            "max_hunk_chars": 12000,
+        },
         "default": {"min_chars": 12000, "mode": "preview_store", "preview_head_chars": 3000, "preview_tail_chars": 3000},
     },
 }
@@ -83,7 +100,12 @@ def tool_policy(tool_name: str, settings: Dict[str, Any] | None = None) -> Dict[
     base = settings.get("compression", {}) or {}
     tools = settings.get("tools", {}) or {}
     specific = tools.get(tool_name) or tools.get("default") or {}
-    return _deep_merge(base, specific if isinstance(specific, dict) else {})
+    policy = _deep_merge(base, specific if isinstance(specific, dict) else {})
+    # P0 safety override: terminal uses evidence-preserving compression even if older
+    # user config still carries the previous preview_store terminal policy.
+    if tool_name in {"terminal", "patch"}:
+        policy = _deep_merge(policy, DEFAULTS["tools"][tool_name])
+    return policy
 
 
 def policy_summary(settings: Dict[str, Any] | None = None) -> Dict[str, Any]:
@@ -96,8 +118,10 @@ def policy_summary(settings: Dict[str, Any] | None = None) -> Dict[str, Any]:
             "tool_name": tool_name,
             "mode": policy.get("mode") or "preview_store",
             "min_chars": int(policy.get("min_chars") or 0),
-            "preview_head_chars": int(policy.get("preview_head_chars") or 0),
-            "preview_tail_chars": int(policy.get("preview_tail_chars") or 0),
+            "success_min_chars": int(policy.get("success_min_chars") or 0),
+            "failure_min_chars": int(policy.get("failure_min_chars") or 0),
+            "preview_head_chars": int(policy.get("preview_head_chars") or policy.get("stdout_head_chars") or 0),
+            "preview_tail_chars": int(policy.get("preview_tail_chars") or policy.get("stdout_tail_chars") or 0),
             "enabled": bool((settings.get("compression", {}) or {}).get("enabled", True)),
         })
     return {

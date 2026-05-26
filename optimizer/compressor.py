@@ -33,6 +33,28 @@ def compress_result(
     storage_enabled: bool = True,
 ) -> Dict[str, Any]:
     raw = to_text(result)
+    mode = str(policy.get("mode") or "preview_store")
+    if tool_name == "terminal" and mode == "terminal_evidence":
+        from .terminal_evidence import terminal_result
+
+        return terminal_result(
+            tool_name=tool_name,
+            tool_call_id=tool_call_id,
+            result=result,
+            policy=policy,
+            storage_enabled=storage_enabled,
+        )
+    if tool_name == "patch" and mode == "patch_diff_evidence":
+        from .patch_diff_evidence import patch_result
+
+        return patch_result(
+            tool_name=tool_name,
+            tool_call_id=tool_call_id,
+            result=result,
+            policy=policy,
+            storage_enabled=storage_enabled,
+        )
+
     raw_chars = len(raw)
     min_chars = int(policy.get("min_chars") or 12000)
     head_chars = int(policy.get("preview_head_chars") or 3000)
