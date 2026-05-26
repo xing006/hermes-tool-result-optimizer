@@ -24,8 +24,7 @@
 | **Dashboard tab** | Real-time overview: raw vs compressed tokens, per-tool savings, recent call details, top rankings |
 | **i18n** | English and Simplified Chinese UI — auto-detects browser locale |
 | **No core changes** | Pure plugin hooks (`post_tool_call` + `transform_tool_result`), zero Hermes source modification |
-| **LLM summarization** | Configurable and disabled by default — whitelist-only, never for terminal/patch/code |
-
+| |
 
 ## Architecture
 
@@ -198,10 +197,7 @@ The compressed result for a terminal command looks like:
 | P1.5 | ✅ | Dashboard i18n (简体中文 + English) |
 | P2 | ✅ | terminal_evidence + patch_diff_evidence compression modes |
 | P2.5 | ✅ | Dashboard trend chart, by_mode grouping, evidence columns, calendar-day time filter |
-| P3-1 | 📋 Planned | LLM summary scaffolding (config, safety routing, eligibility) |
-| P3-2 | ⏳ | Optional LLM summarization for whitelist tools (web, browser, skill_view) |
 
----
 
 ## License
 

@@ -24,8 +24,7 @@
 | **Dashboard 面板** | 实时总览：原始 vs 压缩后 token、按工具节省排行、调用明细 |
 | **国际化** | 简体中文 + English，自动检测浏览器语言 |
 | **零核心改动** | 纯插件钩子（`post_tool_call` + `transform_tool_result`），不动一行 Hermes 源码 |
-| **LLM 摘要（可选）** | 默认关闭，白名单控制，不会对 terminal / patch / 代码输出做摘要 |
-
+| |
 
 ## 架构
 
@@ -198,10 +197,7 @@ tool_result_optimizer:
 | P1.5 | ✅ | Dashboard 国际化（简体中文 + English） |
 | P2 | ✅ | terminal_evidence + patch_diff_evidence 压缩模式 |
 | P2.5 | ✅ | Dashboard 趋势图、按模式分组、证据列、自然日时间过滤 |
-| P3-1 | 📋 已计划 | LLM 摘要脚手架（配置、安全路由、准入逻辑） |
-| P3-2 | ⏳ | 可选 LLM 摘要（白名单工具：web、browser、skill_view） |
 
----
 
 ## 许可证
 
